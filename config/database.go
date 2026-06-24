@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 	"reptil-adventure-api/models"
 
 	"gorm.io/driver/postgres"
@@ -12,13 +13,28 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	host := "localhost"
-	user := "postgres"
-	password := "Reptilbukanhewan26"
-	dbName := "reptil_adventure"
-	port := "5432"
+	// 🚀 Membaca dari Environment Variable (Render), jika kosong gunakan default lokal Anda
+	host := os.Getenv("DB_HOST")
+	if host == "" { host = "localhost" }
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", host, user, password, dbName, port)
+	user := os.Getenv("DB_USER")
+	if user == "" { user = "postgres" }
+
+	password := os.Getenv("DB_PASSWORD")
+	if password == "" { password = "Reptilbukanhewan26" }
+
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" { dbName = "reptil_adventure" }
+
+	port := os.Getenv("DB_PORT")
+	if port == "" { port = "5432" }
+
+	// Render biasanya membutuhkan sslmode=require jika menggunakan cloud database eksternal.
+	// Kita buat dinamis: jika di lokal pakai disable, di production disesuaikan.
+	sslMode := os.Getenv("DB_SSLMODE")
+	if sslMode == "" { sslMode = "disable" }
+
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Jakarta", host, user, password, dbName, port, sslMode)
 	
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
