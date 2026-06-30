@@ -13,34 +13,29 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	// 🚀 Membaca dari Environment Variable (Render), jika kosong gunakan default lokal Anda
-	host := os.Getenv("DB_HOST")
-	if host == "" { host = "localhost" }
+	// 🚀 Ambil string koneksi utuh dari environment variable Supabase
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		// Fallback ke konfigurasi lokal jika DATABASE_URL di PC kamu belum diset
+		host := "localhost"
+		user := "postgres"
+		password := "Reptilbukanhewan26"
+		dbName := "reptil_adventure"
+		port := "5432"
+		sslMode := "disable"
+		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Jakarta", host, user, password, dbName, port, sslMode)
+	}
 
-	user := os.Getenv("DB_USER")
-	if user == "" { user = "postgres" }
-
-	password := os.Getenv("DB_PASSWORD")
-	if password == "" { password = "Reptilbukanhewan26" }
-
-	dbName := os.Getenv("DB_NAME")
-	if dbName == "" { dbName = "reptil_adventure" }
-
-	port := os.Getenv("DB_PORT")
-	if port == "" { port = "5432" }
-
-	// Render biasanya membutuhkan sslmode=require jika menggunakan cloud database eksternal.
-	// Kita buat dinamis: jika di lokal pakai disable, di production disesuaikan.
-	sslMode := os.Getenv("DB_SSLMODE")
-	if sslMode == "" { sslMode = "disable" }
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Jakarta", host, user, password, dbName, port, sslMode)
-	
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	// 🚀 Buka koneksi menggunakan driver postgres GORM dengan konfigurasi khusus PgBouncer Supabase
+	database, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true, // 🔥 WAJIB true agar tidak error bentrok dengan transaction pooler (PgBouncer) Supabase
+	}), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
+	
 	if err != nil {
-		log.Fatal("Gagal terhubung ke database PostgreSQL: ", err)
+		log.Fatal("Gagal terhubung ke database PostgreSQL Supabase: ", err)
 	}
 
 	// EKSEKUSI MIGRASI SATU PER SATU AGAR AMAN DAN TIDAK REBUTAN CONTEXT
@@ -63,20 +58,17 @@ func ConnectDatabase() {
 	fmt.Println("🚀 KONEKSI DAN SELURUH TABEL DATABASE BERHASIL DIMIGRASI!")
 	DB = database
 
-	// LOGIKA SEEDING ROLES (SUDAH DIPERBARUI)
-	// LOGIKA SEEDING ROLES (VERSI CEK SATU PER SATU)
+	// LOGIKA SEEDING ROLES
 	expectedRoles := map[uint]string{
 		1: "Developer",
 		2: "Owner",
 		3: "Admin",
-		4: "Customer", // 🌟 Dipastikan terdeteksi di sini
+		4: "Customer",
 	}
 
 	for id, name := range expectedRoles {
 		var role models.Role
-		// Cek apakah ID tersebut sudah ada atau belum
 		if err := DB.First(&role, id).Error; err != nil {
-			// Jika belum ada (record not found), buat baru dengan ID terpasang tetap
 			DB.Create(&models.Role{ID: id, Name: name})
 			fmt.Printf("🌱 Role %s (ID: %d) berhasil ditanam otomatis!\n", name, id)
 		}
@@ -101,4 +93,3 @@ func ConnectDatabase() {
 
 	fmt.Println("🚀 KONEKSI DAN SELURUH RE-ALOKASI TABEL BERHASIL!")
 }
-

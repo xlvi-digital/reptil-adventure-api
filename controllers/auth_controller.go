@@ -260,7 +260,7 @@ func UpdateUserProfile(c *gin.Context) {
 		"message": "Informasi akun Anda berhasil diperbarui!",
 	})
 }
-
+                                   
 func GetCustomerOrders(c *gin.Context) {
 	// 1. Ambil userID dari context JWT
 	userIDFromContext, exists := c.Get("userID")
@@ -289,7 +289,7 @@ func GetCustomerOrders(c *gin.Context) {
 	// ⚠️ PENTING: Pastikan nama kolom di database Anda adalah "user_id". 
 	// Jika di struct models.Order Anda menggunakan nama kolom lain (misal CustomerID), ganti menjadi "customer_id = ?"
 	// Baris 266 di auth_controller.go
-if err := config.DB.Where("customer_id = ?", actualUserID).Order("id desc").Find(&orders).Error; err != nil {
+	if err := config.DB.Where("customer_id = ?", actualUserID).Order("id desc").Find(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal memuat riwayat transaksi: " + err.Error(),
 		})
