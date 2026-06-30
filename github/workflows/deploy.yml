@@ -1,7 +1,7 @@
 name: Sync to Hugging Face
 on:
   push:
-    branches: [main] # atau master
+    branches: [main] # atau sesuaikan jika nama branch utama kamu 'master'
 jobs:
   deploy:
     runs-on: ubuntu-latest
