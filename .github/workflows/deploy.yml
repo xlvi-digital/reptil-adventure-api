@@ -1,15 +1,20 @@
-name: Sync to Hugging Face
+name: Code Check
 on:
   push:
-    branches: [main] # atau sesuaikan jika nama branch utama kamu 'master'
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
 jobs:
-  deploy:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
-          fetch-depth: 0
-      - name: Push to HF
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://xlvi-digital:$HF_TOKEN@huggingface.co/spaces/xlvi-digital/reptil-adventure-api main
+          go-version: '1.21'
+
+      - name: Verify Dependencies
+        run: go mod verify
